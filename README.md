@@ -1,4 +1,5 @@
 Implementar um simulador funcional de escape room em Gleam, com as seguintes metas:
+
 • Aplicar tipos algébricos e pattern matching para modelar ambientes, objetos e enigmas.
 
 • Usar recursão e composição de funções em vez de laços imperativos.
