@@ -374,9 +374,9 @@ pub fn pista_n_examples() {
 /// Testes dos efeitos dos três enigmas.
 pub fn efeitos_examples() {
   let j = jogador.novo_jogador("Ana", "Recepção")
-  check.eq((enigma_cesar().efeito)(j).inventario, [cartao_nivel_1])
-  check.eq((enigma_auditoria().efeito)(j).inventario, [cartao_nivel_2])
-  check.eq((enigma_poema().efeito)(j).inventario, [item_registro])
+  check.eq(enigma_cesar().efeito(j).inventario, [cartao_nivel_1])
+  check.eq(enigma_auditoria().efeito(j).inventario, [cartao_nivel_2])
+  check.eq(enigma_poema().efeito(j).inventario, [item_registro])
   check.eq(enigma_cesar().solucao, "MAIN")
 }
 
