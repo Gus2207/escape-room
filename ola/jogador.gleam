@@ -8,13 +8,11 @@ import sgleam/check
 /// - `nome`: nome do jogador.
 /// - `inventario`: nomes dos itens coletados, sem repetições, na ordem
 ///   em que foram obtidos.
-/// - `pontos_de_vida`: vida atual; nunca é negativa.
 /// - `localizacao`: nome do ambiente em que o jogador está.
 pub type Jogador {
   Jogador(
     nome: String,
     inventario: List(String),
-    pontos_de_vida: Int,
     localizacao: String,
   )
 }
@@ -25,7 +23,6 @@ pub fn novo_jogador(nome: String, localizacao: String) -> Jogador {
   Jogador(
     nome: nome,
     inventario: [],
-    pontos_de_vida: 100,
     localizacao: localizacao,
   )
 }
@@ -73,17 +70,6 @@ pub fn mover(jogador: Jogador, destino: String) -> Jogador {
   Jogador(..jogador, localizacao: destino)
 }
 
-/// Devolve um novo jogador com `dano` pontos de vida a menos.
-/// Os pontos de vida nunca ficam abaixo de zero. `dano` deve ser >= 0.
-pub fn perder_vida(jogador: Jogador, dano: Int) -> Jogador {
-  Jogador(..jogador, pontos_de_vida: int.max(0, jogador.pontos_de_vida - dano))
-}
-
-/// Devolve True se o jogador ainda tem pontos de vida.
-pub fn esta_vivo(jogador: Jogador) -> Bool {
-  jogador.pontos_de_vida > 0
-}
-
 /// Conta os itens do inventário (recursão em cauda com acumulador).
 pub fn contar_itens(inventario: List(String)) -> Int {
   contar_itens_loop(inventario, 0)
@@ -120,7 +106,7 @@ fn enumerar(itens: List(String), n: Int) -> String {
 pub fn novo_jogador_examples() {
   check.eq(
     novo_jogador("Ana", "Recepção"),
-    Jogador("Ana", [], 100, "Recepção"),
+    Jogador("Ana", [], "Recepção"),
   )
 }
 
@@ -154,13 +140,9 @@ pub fn adicionar_item_examples() {
 }
 
 /// Testes de `mover`, `perder_vida` e `esta_vivo`.
-pub fn vida_e_movimento_examples() {
+pub fn movimento_examples() {
   let j = novo_jogador("Ana", "Recepção")
   check.eq(mover(j, "Auditoria").localizacao, "Auditoria")
-  check.eq(perder_vida(j, 10).pontos_de_vida, 90)
-  check.eq(perder_vida(j, 500).pontos_de_vida, 0)
-  check.eq(esta_vivo(j), True)
-  check.eq(esta_vivo(perder_vida(j, 100)), False)
 }
 
 /// Testes de `contar_itens`.

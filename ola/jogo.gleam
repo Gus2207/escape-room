@@ -1,12 +1,10 @@
 import ambiente.{type Ambiente}
 import enigma.{type Enigma, type ErroEnigma, RequisitosAusentes, RespostaIncorreta}
-import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/string
-import jogador.{type Jogador, Jogador}
+import jogador.{type Jogador}
 import objeto.{type Objeto}
 import sgleam/check
-import texto
 
 /// Estado completo da simulação.
 ///
@@ -25,7 +23,6 @@ pub type Jogo {
 pub type Situacao {
   EmAndamento
   Fugiu
-  Derrotado
 }
 
 /// Cria o jogo inicial: jogador na Recepção, sem itens, com as três
@@ -43,13 +40,9 @@ pub fn novo_jogo(nome: String) -> Jogo {
 
 /// Devolve a situação da partida (fuga tem prioridade sobre derrota).
 pub fn situacao(estado: Jogo) -> Situacao {
-  case
-    estado.jogador.localizacao == ambiente.nome_fora,
-    estado.jogador.pontos_de_vida
-  {
-    True, _ -> Fugiu
-    False, pv if pv <= 0 -> Derrotado
-    False, _ -> EmAndamento
+  case estado.jogador.localizacao == ambiente.nome_fora {
+    True -> Fugiu
+    False -> EmAndamento
   }
 }
 
@@ -64,7 +57,6 @@ pub fn bloqueio_ativo(estado: Jogo) -> Bool {
 pub fn mensagem_final(estado: Jogo) -> String {
   case situacao(estado) {
     Fugiu -> "Você escapou do laboratório levando os registros autênticos!"
-    Derrotado -> "Seus pontos de vida acabaram. Fim de jogo."
     EmAndamento -> ""
   }
 }
@@ -108,12 +100,7 @@ pub fn explorar_sala(estado: Jogo) -> #(Jogo, String) {
 
 /// Mostra o inventário e os pontos de vida. O estado não muda.
 pub fn consultar_inventario(estado: Jogo) -> #(Jogo, String) {
-  #(
-    estado,
-    jogador.listar_inventario(estado.jogador.inventario)
-      <> "\nPontos de vida: "
-      <> int.to_string(estado.jogador.pontos_de_vida),
-  )
+  #(estado, jogador.listar_inventario(estado.jogador.inventario))
 }
 
 /// Texto com os requisitos de um enigma ("" se não houver).
@@ -133,24 +120,6 @@ pub fn examinar_enigmas(estado: Jogo) -> #(Jogo, String) {
         estado,
         "Enigma: " <> pendente.descricao <> requisitos_txt(pendente.requisitos),
       )
-    }
-  })
-}
-
-/// Mostra a `n`-ésima pista (a partir de 1) do enigma pendente da sala
-/// atual. O estado não muda.
-pub fn pedir_dica(estado: Jogo, n: Int) -> #(Jogo, String) {
-  com_sala(estado, fn(sala: Ambiente) {
-    case ambiente.enigma_pendente(sala) {
-      None -> #(estado, "Nenhum enigma pendente nesta sala.")
-      Some(pendente) ->
-        case enigma.pista_n(pendente.pistas, n) {
-          Some(pista) -> #(estado, "Pista " <> int.to_string(n) <> ": " <> pista)
-          None -> #(
-            estado,
-            "Não existe a pista número " <> int.to_string(n) <> ".",
-          )
-        }
     }
   })
 }
@@ -229,11 +198,9 @@ fn tratar_tentativa(
       )
     }
     Error(RespostaIncorreta) -> {
-      let penalizado = jogador.perder_vida(estado.jogador, 10)
       #(
-        Jogo(..estado, jogador: penalizado),
-        "Resposta incorreta! Você perdeu 10 pontos de vida. Restam: "
-          <> int.to_string(penalizado.pontos_de_vida),
+        estado,
+        "Resposta incorreta! Verifique as regras de formatação e tente novamente.",
       )
     }
     Error(RequisitosAusentes(faltantes)) -> #(
@@ -266,7 +233,7 @@ fn buscar_exigencia(
   case pares {
     [] -> None
     [#(nome, item), ..resto] ->
-      case texto.iguais(nome, destino) {
+      case nome == destino {
         True -> Some(item)
         False -> buscar_exigencia(resto, destino)
       }
@@ -306,7 +273,7 @@ pub fn mover_para(estado: Jogo, destino: String) -> #(Jogo, String) {
 /// Move o jogador para `nome_destino` (já validado) e descreve o
 /// resultado.
 fn efetivar_movimento(estado: Jogo, nome_destino: String) -> #(Jogo, String) {
-  case texto.iguais(nome_destino, ambiente.nome_saida) {
+  case nome_destino == ambiente.nome_saida {
     True -> {
       let novo = Jogo(..estado, jogador: jogador.mover(estado.jogador, ambiente.nome_fora))
       #(
@@ -329,8 +296,6 @@ pub fn novo_jogo_examples() {
   check.eq(situacao(j), EmAndamento)
   check.eq(bloqueio_ativo(j), True)
   check.eq(mensagem_final(j), "")
-  let morto = Jogo(..j, jogador: Jogador(..j.jogador, pontos_de_vida: 0))
-  check.eq(situacao(morto), Derrotado)
   let fora = Jogo(..j, jogador: jogador.mover(j.jogador, ambiente.nome_fora))
   check.eq(situacao(fora), Fugiu)
 }
@@ -345,7 +310,7 @@ pub fn consultas_examples() {
   )
   check.eq(
     consultar_inventario(j).1,
-    "Inventário vazio.\nPontos de vida: 100",
+    "Inventário vazio.",
   )
   check.eq(
     examinar_enigmas(j).1,
@@ -353,20 +318,10 @@ pub fn consultas_examples() {
   )
 }
 
-/// Testes de `pedir_dica`.
-pub fn pedir_dica_examples() {
-  let j = novo_jogo("Ana")
-  check.eq(
-    pedir_dica(j, 1).1,
-    "Pista 1: A Nota Adesiva da recepção traz um código de 4 letras.",
-  )
-  check.eq(pedir_dica(j, 9).1, "Não existe a pista número 9.")
-}
-
 /// Testes de `interagir_objeto` (coleta, leitura e objeto inexistente).
 pub fn interagir_objeto_examples() {
   let j0 = novo_jogo("Ana")
-  let #(j1, msg) = interagir_objeto(j0, "nota adesiva")
+  let #(j1, msg) = interagir_objeto(j0, "Nota Adesiva")
   check.eq(j1.jogador.inventario, ["Nota Adesiva"])
   check.eq(string.contains(msg, "PDLQ"), True)
   check.eq(
@@ -380,13 +335,12 @@ pub fn interagir_objeto_examples() {
 pub fn resolver_examples() {
   let j0 = novo_jogo("Ana")
   let #(erro, msg_erro) = resolver(j0, "ABCD")
-  check.eq(erro.jogador.pontos_de_vida, 90)
   check.eq(erro.jogador.inventario, [])
   check.eq(
     msg_erro,
-    "Resposta incorreta! Você perdeu 10 pontos de vida. Restam: 90",
+    "Resposta incorreta! Verifique as regras de formatação e tente novamente.",
   )
-  let #(ok, _) = resolver(j0, "main")
+  let #(ok, _) = resolver(j0, "MAIN")
   check.eq(ok.jogador.inventario, [enigma.cartao_nivel_1])
   check.eq(examinar_enigmas(ok).1, "Nenhum enigma pendente nesta sala.")
   check.eq(resolver(ok, "MAIN").1, "Não há enigmas pendentes nesta sala.")
@@ -394,9 +348,9 @@ pub fn resolver_examples() {
 
 /// Testes de `item_exigido`.
 pub fn item_exigido_examples() {
-  check.eq(item_exigido("auditoria"), Some(enigma.cartao_nivel_1))
+  check.eq(item_exigido("Auditoria"), Some(enigma.cartao_nivel_1))
   check.eq(item_exigido("Servidores"), Some(enigma.cartao_nivel_2))
-  check.eq(item_exigido("saida"), Some(enigma.item_registro))
+  check.eq(item_exigido("Saída"), Some(enigma.item_registro))
   check.eq(item_exigido("Recepção"), None)
 }
 
@@ -412,7 +366,7 @@ pub fn mover_para_examples() {
     "Não há passagem para \"Servidores\" a partir daqui. Saídas: Auditoria.",
   )
   let #(j1, _) = resolver(j0, "MAIN")
-  let #(j2, _) = mover_para(j1, "auditoria")
+  let #(j2, _) = mover_para(j1, "Auditoria")
   check.eq(j2.jogador.localizacao, "Auditoria")
   let #(j3, _) = mover_para(j2, "Servidores")
   check.eq(j3.jogador.localizacao, "Auditoria")

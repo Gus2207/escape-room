@@ -5,7 +5,6 @@ import gleam/string
 import jogador.{type Jogador}
 import objeto.{type Objeto}
 import sgleam/check
-import texto
 
 /// Nome da Recepção do Laboratório (sala inicial).
 pub const nome_recepcao: String = "Recepção"
@@ -68,7 +67,7 @@ pub fn remover_objeto(amb: Ambiente, nome: String) -> Ambiente {
   Ambiente(
     ..amb,
     objetos: list.filter(amb.objetos, fn(obj: Objeto) {
-      !texto.iguais(obj.nome, nome)
+      obj.nome != nome
     }),
   )
 }
@@ -99,7 +98,7 @@ pub fn buscar_ambiente(
   case ambientes {
     [] -> None
     [amb, ..resto] ->
-      case texto.iguais(amb.nome, nome) {
+      case amb.nome == nome {
         True -> Some(amb)
         False -> buscar_ambiente(resto, nome)
       }
@@ -126,7 +125,7 @@ pub fn achar_saida(saidas: List(String), destino: String) -> Option(String) {
   case saidas {
     [] -> None
     [saida, ..resto] ->
-      case texto.iguais(saida, destino) {
+      case saida == destino {
         True -> Some(saida)
         False -> achar_saida(resto, destino)
       }
@@ -188,7 +187,7 @@ pub fn explorar_examples() {
 /// Testes de `remover_objeto`.
 pub fn remover_objeto_examples() {
   let sala = sala_recepcao()
-  check.eq(objeto.nomes(remover_objeto(sala, "nota adesiva").objetos), [
+  check.eq(objeto.nomes(remover_objeto(sala, "Nota Adesiva").objetos), [
     "Rainha de Ouros",
   ])
   check.eq(objeto.nomes(remover_objeto(sala, "Inexistente").objetos), [
@@ -232,7 +231,7 @@ fn nome_ou_vazio(opcional: Option(Ambiente)) -> String {
 pub fn buscar_e_substituir_examples() {
   let todos = [sala_recepcao(), sala_auditoria(), sala_servidores()]
   check.eq(nome_ou_vazio(buscar_ambiente([], "Recepção")), "")
-  check.eq(nome_ou_vazio(buscar_ambiente(todos, "servidores")), "Servidores")
+  check.eq(nome_ou_vazio(buscar_ambiente(todos, "Servidores")), "Servidores")
   check.eq(nome_ou_vazio(buscar_ambiente(todos, "Cozinha")), "")
   let nova = Ambiente(..sala_auditoria(), objetos: [])
   let atualizados = substituir_ambiente(todos, nova)
@@ -252,7 +251,7 @@ pub fn buscar_e_substituir_examples() {
 /// Testes de `achar_saida`.
 pub fn achar_saida_examples() {
   check.eq(achar_saida([], "Saída"), None)
-  check.eq(achar_saida(["Auditoria", "Saída"], "saida"), Some("Saída"))
+  check.eq(achar_saida(["Auditoria", "Saída"], "Saída"), Some("Saída"))
   check.eq(achar_saida(["Auditoria"], "Servidores"), None)
 }
 

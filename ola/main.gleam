@@ -70,11 +70,6 @@ pub fn m6(destino: String) -> MainMenu {
   menus.m6(destino)
 }
 
-/// Opção "Pedir a pista número `n`" (a partir de 1).
-pub fn m7(n: Int) -> MainMenu {
-  menus.m7(n)
-}
-
 /// Opção "Encerrar simulação".
 pub fn exit() -> MainMenu {
   menus.exit()

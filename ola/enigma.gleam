@@ -5,7 +5,6 @@ import gleam/result
 import gleam/string
 import jogador.{type Jogador}
 import sgleam/check
-import texto
 
 /// Nome do item concedido pelo Enigma 1 (libera a Sala de Auditoria).
 pub const cartao_nivel_1: String = "Cartão de Acesso Nível 1"
@@ -22,7 +21,6 @@ pub const item_registro: String = "Registro Autêntico (Dados Recuperados)"
 /// - `descricao`: enunciado do desafio.
 /// - `solucao`: resposta esperada (comparada sem distinguir maiúsculas
 ///   nem acentos).
-/// - `pistas`: dicas em ordem crescente de ajuda.
 /// - `requisitos`: itens que o jogador precisa ter para tentar resolver.
 /// - `mensagem_sucesso`: texto exibido quando o enigma é resolvido.
 /// - `efeito`: função pura aplicada ao jogador quando a resposta está certa.
@@ -30,7 +28,6 @@ pub type Enigma {
   Enigma(
     descricao: String,
     solucao: String,
-    pistas: List(String),
     requisitos: List(String),
     mensagem_sucesso: String,
     efeito: fn(Jogador) -> Jogador,
@@ -53,7 +50,7 @@ pub fn resolver_enigma(
   resposta: String,
   jogador: Jogador,
 ) -> Jogador {
-  case texto.iguais(resposta, enigma.solucao) {
+  case resposta == enigma.solucao {
     True -> enigma.efeito(jogador)
     False -> jogador
   }
@@ -84,20 +81,9 @@ fn verificar_requisitos(enigma: Enigma, jog: Jogador) -> Result(Nil, ErroEnigma)
 /// Devolve `Ok(Nil)` se a resposta confere com a solução, ou
 /// `Error(RespostaIncorreta)`.
 fn verificar_resposta(enigma: Enigma, resposta: String) -> Result(Nil, ErroEnigma) {
-  case texto.iguais(resposta, enigma.solucao) {
+  case resposta == enigma.solucao {
     True -> Ok(Nil)
     False -> Error(RespostaIncorreta)
-  }
-}
-
-/// Devolve a `n`-ésima pista (contagem a partir de 1), ou `None` se `n`
-/// for menor que 1 ou maior que a quantidade de pistas.
-/// Recursão simultânea sobre a lista e sobre o número.
-pub fn pista_n(pistas: List(String), n: Int) -> Option(String) {
-  case pistas, n {
-    [primeira, ..], 1 -> Some(primeira)
-    [_, ..resto], _ if n > 1 -> pista_n(resto, n - 1)
-    _, _ -> None
   }
 }
 
@@ -106,11 +92,6 @@ pub fn enigma_cesar() -> Enigma {
   Enigma(
     descricao: "O terminal de acesso ao corredor pede uma senha de 4 letras. Use a nota adesiva: retroceda 3 letras no alfabeto em cada letra do código.",
     solucao: "MAIN",
-    pistas: [
-      "A Nota Adesiva da recepção traz um código de 4 letras.",
-      "O lembrete do TI manda dar 3 passos para trás no alfabeto.",
-      "Retroceder 3 letras: o P vira M. Faça o mesmo com D, L e Q.",
-    ],
     requisitos: [],
     mensagem_sucesso: "Acesso concedido! O terminal libera o corredor e emite o "
       <> cartao_nivel_1
@@ -125,11 +106,6 @@ pub fn enigma_auditoria() -> Enigma {
   Enigma(
     descricao: "A porta blindada exige os 3 técnicos que violaram o protocolo, em ordem cronológica, no formato NOME REGRA separados por vírgula.",
     solucao: "RAFAEL 02, THIAGO 03, FERNANDA 04",
-    pistas: [
-      "Compare cada ação da Trilha de Auditoria com as regras do Manual de Protocolo.",
-      "Acompanhe o estado (rede e segurança) depois de cada técnico: ele é o ponto de partida do próximo.",
-      "Três técnicos violaram regras diferentes. Responda como: NOME 00, NOME 00, NOME 00.",
-    ],
     requisitos: [],
     mensagem_sucesso: "Infratores confirmados! A porta blindada emite o "
       <> cartao_nivel_2
@@ -144,11 +120,6 @@ pub fn enigma_poema() -> Enigma {
   Enigma(
     descricao: "O painel de contenção pede a sequência das 4 figuras das cartas coletadas, na ordem em que aparecem na Placa de Bronze (separadas por espaço).",
     solucao: "RAINHA REI VALETE AS",
-    pistas: [
-      "Na Placa de Bronze, cada figura aparece em letras maiúsculas.",
-      "A ordem correta é a do poema, não a da coleta.",
-      "O Ás pode ser escrito como AS.",
-    ],
     requisitos: cartas_necessarias(),
     mensagem_sucesso: "Registros autênticos recuperados! O bloqueio de emergência foi desativado e a saída do laboratório está liberada.",
     efeito: fn(j: Jogador) { jogador.adicionar_item(j, item_registro) },
@@ -327,7 +298,7 @@ pub fn trilha_registros() -> List(Registro) {
 /// Testes de `resolver_enigma` (resposta certa e errada).
 pub fn resolver_enigma_examples() {
   let j = jogador.novo_jogador("Ana", "Recepção")
-  check.eq(resolver_enigma(enigma_cesar(), "main", j).inventario, [
+  check.eq(resolver_enigma(enigma_cesar(), "MAIN", j).inventario, [
     cartao_nivel_1,
   ])
   check.eq(resolver_enigma(enigma_cesar(), "PDLQ", j), j)
@@ -353,22 +324,13 @@ pub fn tentar_resolver_examples() {
       jogador.adicionar_item(acc, carta)
     })
   check.eq(
-    tentar_resolver(enigma_poema(), "rainha rei valete ás", com_cartas),
+    tentar_resolver(enigma_poema(), "RAINHA REI VALETE AS", com_cartas),
     Ok(jogador.adicionar_item(com_cartas, item_registro)),
   )
   check.eq(
     tentar_resolver(enigma_poema(), "REI RAINHA VALETE AS", com_cartas),
     Error(RespostaIncorreta),
   )
-}
-
-/// Testes de `pista_n` (casos base e recursivo).
-pub fn pista_n_examples() {
-  check.eq(pista_n([], 1), None)
-  check.eq(pista_n(["a", "b", "c"], 1), Some("a"))
-  check.eq(pista_n(["a", "b", "c"], 3), Some("c"))
-  check.eq(pista_n(["a", "b", "c"], 4), None)
-  check.eq(pista_n(["a", "b", "c"], 0), None)
 }
 
 /// Testes dos efeitos dos três enigmas.

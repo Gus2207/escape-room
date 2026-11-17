@@ -1,4 +1,3 @@
-import gleam/int
 import gleam/io
 import gleam/list
 import gleam/string
@@ -14,7 +13,6 @@ import sgleam/check
 /// - `Interagir(nome)`: interage com o objeto `nome`.
 /// - `Resolver(resposta)`: tenta resolver o enigma da sala.
 /// - `IrPara(destino)`: move o jogador para outra sala.
-/// - `PedirDica(n)`: mostra a n-ésima pista do enigma da sala.
 /// - `Sair`: encerra a simulação.
 pub type MainMenu {
   Explorar
@@ -23,7 +21,6 @@ pub type MainMenu {
   Interagir(String)
   Resolver(String)
   IrPara(String)
-  PedirDica(Int)
   Sair
 }
 
@@ -36,7 +33,6 @@ pub fn display_main_menu() -> Nil {
   io.println("m4(\"objeto\"): Interagir com um objeto")
   io.println("m5(\"resposta\"): Resolver o enigma da sala")
   io.println("m6(\"destino\"): Ir para outra sala")
-  io.println("m7(n): Pedir a n-ésima pista")
   io.println("exit(): Encerrar simulação")
 }
 
@@ -70,11 +66,6 @@ pub fn m6(destino: String) -> MainMenu {
   IrPara(destino)
 }
 
-/// Opção "Pedir a pista número `n`" (a partir de 1).
-pub fn m7(n: Int) -> MainMenu {
-  PedirDica(n)
-}
-
 /// Opção "Encerrar simulação".
 pub fn exit() -> MainMenu {
   Sair
@@ -91,7 +82,6 @@ pub fn executar(estado: Jogo, opcao: MainMenu) -> #(Jogo, String) {
     EmAndamento, Interagir(nome) -> jogo.interagir_objeto(estado, nome)
     EmAndamento, Resolver(resposta) -> jogo.resolver(estado, resposta)
     EmAndamento, IrPara(destino) -> jogo.mover_para(estado, destino)
-    EmAndamento, PedirDica(n) -> jogo.pedir_dica(estado, n)
     _, Sair -> #(estado, "Simulação encerrada.")
     _, _ -> #(estado, "A simulação já terminou. " <> jogo.mensagem_final(estado))
   }
@@ -115,7 +105,6 @@ pub fn descrever_opcao(opcao: MainMenu) -> String {
     Interagir(nome) -> "m4(\"" <> nome <> "\")"
     Resolver(resposta) -> "m5(\"" <> resposta <> "\")"
     IrPara(destino) -> "m6(\"" <> destino <> "\")"
-    PedirDica(n) -> "m7(" <> int.to_string(n) <> ")"
     Sair -> "exit()"
   }
 }
@@ -146,7 +135,6 @@ pub fn roteiro_fuga() -> List(MainMenu) {
     m4("Nota Adesiva"),
     m4("Rainha de Ouros"),
     m3(),
-    m7(1),
     m5("ABCD"),
     m5("MAIN"),
     m6("Auditoria"),
@@ -172,7 +160,6 @@ pub fn menus_examples() {
   check.eq(m4("Nota Adesiva"), Interagir("Nota Adesiva"))
   check.eq(m5("MAIN"), Resolver("MAIN"))
   check.eq(m6("Auditoria"), IrPara("Auditoria"))
-  check.eq(m7(2), PedirDica(2))
   check.eq(exit(), Sair)
 }
 
@@ -180,7 +167,6 @@ pub fn menus_examples() {
 pub fn descrever_opcao_examples() {
   check.eq(descrever_opcao(m1()), "m1()")
   check.eq(descrever_opcao(m4("Rei de Copas")), "m4(\"Rei de Copas\")")
-  check.eq(descrever_opcao(m7(3)), "m7(3)")
   check.eq(descrever_opcao(exit()), "exit()")
 }
 
@@ -189,14 +175,13 @@ pub fn descrever_opcao_examples() {
 pub fn executar_examples() {
   let j0 = jogo.novo_jogo("Ana")
   check.eq(string.contains(executar(j0, m1()).1, "Nota Adesiva"), True)
-  check.eq(executar(j0, m2()).1, "Inventário vazio.\nPontos de vida: 100")
+  check.eq(executar(j0, m2()).1, "Inventário vazio.")
   check.eq(string.contains(executar(j0, m3()).1, "Enigma:"), True)
-  check.eq(string.contains(executar(j0, m7(2)).1, "Pista 2:"), True)
   check.eq(executar(j0, exit()).1, "Simulação encerrada.")
   let j1 = executar(j0, m4("Rainha de Ouros")).0
   check.eq(j1.jogador.inventario, ["Rainha de Ouros"])
   check.eq(j0.jogador.inventario, [])
-  check.eq(executar(j0, m5("ABCD")).0.jogador.pontos_de_vida, 90)
+  check.eq(executar(j0, m5("ABCD")).0, j0)
   check.eq(
     executar(j0, m6("Auditoria")).1,
     "Acesso negado: é necessário possuir \"Cartão de Acesso Nível 1\".",
@@ -209,7 +194,6 @@ pub fn roteiro_fuga_examples() {
   let fim = executar_roteiro(jogo.novo_jogo("Ana"), roteiro_fuga())
   check.eq(jogo.situacao(fim), Fugiu)
   check.eq(jogo.bloqueio_ativo(fim), False)
-  check.eq(fim.jogador.pontos_de_vida, 90)
   check.eq(jogador.contar_itens(fim.jogador.inventario), 8)
   check.eq(fim.jogador.inventario, [
     "Nota Adesiva",

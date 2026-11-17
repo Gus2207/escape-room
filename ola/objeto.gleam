@@ -2,7 +2,6 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import jogador.{type Jogador}
 import sgleam/check
-import texto
 
 /// Objeto que pode ser examinado ou coletado em um ambiente.
 ///
@@ -59,7 +58,7 @@ pub fn buscar_objeto(objetos: List(Objeto), nome: String) -> Option(Objeto) {
   case objetos {
     [] -> None
     [obj, ..resto] ->
-      case texto.iguais(obj.nome, nome) {
+      case obj.nome == nome{
         True -> Some(obj)
         False -> buscar_objeto(resto, nome)
       }
@@ -187,10 +186,10 @@ fn nome_ou_vazio(opcional: Option(Objeto)) -> String {
 pub fn buscar_objeto_examples() {
   let objetos = [nota_adesiva(), rainha_de_ouros()]
   check.eq(nome_ou_vazio(buscar_objeto([], "Nota Adesiva")), "")
-  check.eq(nome_ou_vazio(buscar_objeto(objetos, "nota adesiva")), "Nota Adesiva")
+  check.eq(nome_ou_vazio(buscar_objeto(objetos, "Nota Adesiva")), "Nota Adesiva")
   check.eq(
-    nome_ou_vazio(buscar_objeto(objetos, " RAINHA DE OUROS ")),
-    "Rainha de Ouros",
+    nome_ou_vazio(buscar_objeto(objetos, " Rainha de Ouros")),
+    "",
   )
   check.eq(nome_ou_vazio(buscar_objeto(objetos, "Rei de Copas")), "")
 }
