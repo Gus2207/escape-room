@@ -1,7 +1,7 @@
 import gleam/io
 import gleam/string
-import jogo
-import menus
+import jogo.{type Jogo}
+import menus.{type MainMenu}
 import sgleam/check
 
 /// Texto de abertura da história.
@@ -14,14 +14,70 @@ pub fn introducao() -> String {
   <> "para liberar a saída."
 }
 
-/// Executa a demonstração: imprime a introdução e o menu e joga o
-/// roteiro completo da fuga, imprimindo cada passo.
+/// Inicia o jogo na Recepção: imprime a introdução, o menu de comandos
+/// e a descrição da sala inicial, aguardando as ações no terminal.
 pub fn main() -> Nil {
   io.println(introducao())
   menus.display_main_menu()
   let estado = jogo.novo_jogo("Pesquisador(a)")
-  let fim = menus.mostrar_roteiro(estado, menus.roteiro_fuga())
-  io.println("\n" <> jogo.mensagem_final(fim))
+  io.println("\n" <> jogo.explorar_sala(estado).1)
+}
+
+/// Cria um novo jogo com o jogador na Recepção.
+pub fn novo_jogo(nome: String) -> Jogo {
+  jogo.novo_jogo(nome)
+}
+
+/// Executa uma opção do menu sobre `estado`, imprime o resultado e
+/// devolve o novo estado.
+pub fn mostrar(estado: Jogo, opcao: MainMenu) -> Jogo {
+  menus.mostrar(estado, opcao)
+}
+
+/// Executa e imprime uma lista de opções em sequência e devolve o
+/// estado final.
+pub fn mostrar_roteiro(estado: Jogo, opcoes: List(MainMenu)) -> Jogo {
+  menus.mostrar_roteiro(estado, opcoes)
+}
+
+/// Opção "Explorar ambiente".
+pub fn m1() -> MainMenu {
+  menus.m1()
+}
+
+/// Opção "Consultar inventário".
+pub fn m2() -> MainMenu {
+  menus.m2()
+}
+
+/// Opção "Examinar enigmas".
+pub fn m3() -> MainMenu {
+  menus.m3()
+}
+
+/// Opção "Interagir com o objeto `nome_objeto`".
+pub fn m4(nome_objeto: String) -> MainMenu {
+  menus.m4(nome_objeto)
+}
+
+/// Opção "Resolver o enigma da sala com `resposta`".
+pub fn m5(resposta: String) -> MainMenu {
+  menus.m5(resposta)
+}
+
+/// Opção "Ir para `destino`".
+pub fn m6(destino: String) -> MainMenu {
+  menus.m6(destino)
+}
+
+/// Opção "Pedir a pista número `n`" (a partir de 1).
+pub fn m7(n: Int) -> MainMenu {
+  menus.m7(n)
+}
+
+/// Opção "Encerrar simulação".
+pub fn exit() -> MainMenu {
+  menus.exit()
 }
 
 /// Testes de `introducao`.
