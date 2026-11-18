@@ -20,6 +20,7 @@ pub fn main() -> Nil {
   io.println(introducao())
   menus.display_main_menu()
   let estado = jogo.novo_jogo("Pesquisador(a)")
+  let jogo = menus.executar(estado, registra_acao())
   io.println("\n" <> jogo.explorar_sala(estado).1)
 }
 
@@ -34,11 +35,6 @@ pub fn mostrar(estado: Jogo, opcao: MainMenu) -> Jogo {
   menus.mostrar(estado, opcao)
 }
 
-/// Executa e imprime uma lista de opções em sequência e devolve o
-/// estado final.
-pub fn mostrar_roteiro(estado: Jogo, opcoes: List(MainMenu)) -> Jogo {
-  menus.mostrar_roteiro(estado, opcoes)
-}
 
 /// Opção "Explorar ambiente".
 pub fn m1() -> MainMenu {
