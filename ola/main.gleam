@@ -20,7 +20,6 @@ pub fn main() -> Nil {
   io.println(introducao())
   menus.display_main_menu()
   let estado = jogo.novo_jogo("Pesquisador(a)")
-  let jogo = menus.executar(estado, registra_acao())
   io.println("\n" <> jogo.explorar_sala(estado).1)
 }
 
@@ -34,7 +33,6 @@ pub fn novo_jogo(nome: String) -> Jogo {
 pub fn mostrar(estado: Jogo, opcao: MainMenu) -> Jogo {
   menus.mostrar(estado, opcao)
 }
-
 
 /// Opção "Explorar ambiente".
 pub fn m1() -> MainMenu {
@@ -73,6 +71,9 @@ pub fn exit() -> MainMenu {
 
 /// Testes de `introducao`.
 pub fn introducao_examples() {
-  check.eq(string.starts_with(introducao(), "=== A SALA DOS DADOS VAZADOS"), True)
+  check.eq(
+    string.starts_with(introducao(), "=== A SALA DOS DADOS VAZADOS"),
+    True,
+  )
   check.eq(string.contains(introducao(), "3 salas"), True)
 }

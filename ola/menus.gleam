@@ -3,6 +3,7 @@ import gleam/list
 import gleam/string
 import jogador
 import jogo.{type Jogo, EmAndamento, Fugiu}
+import mainteste
 import sgleam/check
 
 /// Opções do menu principal.
@@ -37,8 +38,8 @@ pub fn display_main_menu() -> Nil {
 }
 
 /// Opção "Explorar ambiente".
-pub fn m1(estado: Jogo) -> #(Jogo, String) {
-  executar(estado, Explorar)
+pub fn m1() -> MainMenu {
+  Explorar
 }
 
 /// Opção "Consultar inventário".
@@ -83,10 +84,12 @@ pub fn executar(estado: Jogo, opcao: MainMenu) -> #(Jogo, String) {
     EmAndamento, Resolver(resposta) -> jogo.resolver(estado, resposta)
     EmAndamento, IrPara(destino) -> jogo.mover_para(estado, destino)
     _, Sair -> #(estado, "Simulação encerrada.")
-    _, _ -> #(estado, "A simulação já terminou. " <> jogo.mensagem_final(estado))
+    _, _ -> #(
+      estado,
+      "A simulação já terminou. " <> jogo.mensagem_final(estado),
+    )
   }
 }
-
 
 /// Devolve o texto da chamada de menu equivalente à opção, por exemplo
 /// `m4("Nota Adesiva")`.
@@ -104,16 +107,11 @@ pub fn descrever_opcao(opcao: MainMenu) -> String {
 
 /// Executa a opção, imprime o comando e a mensagem no terminal e devolve
 /// o novo estado (camada de apresentação).
-pub fn mostrar(estado: Jogo, opcao: MainMenu) -> Jogo {
+pub fn mostrar(estado: Jogo, opcao: MainMenu) -> Nil {
   let #(novo, mensagem) = executar(estado, opcao)
   io.println("\n> " <> descrever_opcao(opcao))
   io.println(mensagem)
-  novo
+  display_main_menu()
+  let terminal = mainteste.terminal(novo)
+  terminal
 }
-
-
-
-
-
-
-
